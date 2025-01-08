@@ -48,8 +48,8 @@ def get_list_of_func_to_make_envs(
     benchmark: Optional[metaworld.Benchmark],
     benchmark_name: str,
     env_id_to_task_map: Optional[EnvIdToTaskMapType],
-    should_perform_reward_normalization: bool = True,
-    task_name: str = "pick-place-v1",
+    should_perform_reward_normalization: bool = False,
+    task_name: str = "pick-place-v2",
     num_copies_per_env: int = 1,
 ) -> Tuple[List[Any], Dict[str, Any]]:
     """Return a list of functions to construct the MetaWorld environments
@@ -64,9 +64,9 @@ def get_list_of_func_to_make_envs(
             each environment can be associated with multiple tasks. This
             dict persists the mapping between environment ids and tasks.
         should_perform_reward_normalization (bool, optional): Defaults to
-            True.
+            False.
         task_name (str, optional): In case of MT1, only . Defaults to
-            "pick-place-v1".
+            "pick-place-v2".
         num_copies_per_env (int, optional): Number of copies to create for
             each environment. Defaults to 1.
 
@@ -129,6 +129,7 @@ def get_list_of_func_to_make_envs(
                     task = env_id_to_task_map[env_id]
                     env.set_task(task)
                     if should_perform_reward_normalization:
+                        assert False
                         env = NormalizedEnvWrapper(env, normalize_reward=True)
                     return env
 
@@ -151,8 +152,8 @@ def build(
     benchmark: Optional[metaworld.Benchmark],
     benchmark_name: str,
     env_id_to_task_map: Optional[EnvIdToTaskMapType],
-    should_perform_reward_normalization: bool = True,
-    task_name: str = "pick-place-v1",
+    should_perform_reward_normalization: bool = False,
+    task_name: str = "pick-place-v2",
     num_copies_per_env: int = 1,
     initial_task_state: int = 1,
 ) -> MTEnv:
@@ -167,9 +168,9 @@ def build(
             each environment can be associated with multiple tasks. This
             dict persists the mapping between environment ids and tasks.
         should_perform_reward_normalization (bool, optional): Defaults to
-            True.
+            False.
         task_name (str, optional): In case of MT1, only . Defaults to
-            "pick-place-v1".
+            "pick-place-v2".
         num_copies_per_env (int, optional): Number of copies to create for
             each environment. Defaults to 1.
         initial_task_state (int, optional): initial task/environment to
