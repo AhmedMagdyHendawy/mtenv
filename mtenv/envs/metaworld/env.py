@@ -9,6 +9,7 @@ from mtenv import MTEnv
 from mtenv.envs.metaworld.wrappers.normalized_env import (  # type: ignore[attr-defined]
     NormalizedEnvWrapper,
 )
+from mtenv.envs.metaworld.wrappers.rand_task_env import RandEnvWrapper
 from mtenv.envs.shared.wrappers.multienv import MultiEnvWrapper
 
 EnvBuilderType = Callable[[], Env]
@@ -51,6 +52,7 @@ def get_list_of_func_to_make_envs(
     should_perform_reward_normalization: bool = False,
     task_name: str = "pick-place-v2",
     num_copies_per_env: int = 1,
+    sample_task_per_episode: bool= True,
 ) -> Tuple[List[Any], Dict[str, Any]]:
     """Return a list of functions to construct the MetaWorld environments
     and a mapping of environment ids to tasks.
@@ -69,6 +71,8 @@ def get_list_of_func_to_make_envs(
             "pick-place-v2".
         num_copies_per_env (int, optional): Number of copies to create for
             each environment. Defaults to 1.
+        sample_task_per_episode (bool, optional): If True, this means that every
+            episode, we sample a new goal position.
 
     Raises:
         ValueError: if `benchmark` is None and `benchmark_name` is not
@@ -105,20 +109,26 @@ def get_list_of_func_to_make_envs(
         for env_id in env_id_list:
             for name, _ in _get_class_items(current_benchmark):
                 if name == env_id:
-                    task = random.choice(
-                        [
+                    # task = random.choice(
+                    #     [
+                    #         task
+                    #         for task in _get_tasks(current_benchmark)
+                    #         if task.env_name == name
+                    #     ]
+                    # )
+                    task = [
                             task
                             for task in _get_tasks(current_benchmark)
                             if task.env_name == name
                         ]
-                    )
+                
                     env_id_to_task_map[env_id] = task
         return env_id_to_task_map
 
     if env_id_to_task_map is None:
         env_id_to_task_map: EnvIdToTaskMapType = _get_env_id_to_task_map()  # type: ignore[no-redef]
     assert env_id_to_task_map is not None
-
+    
     def get_func_to_make_envs(env_id: str):
         current_benchmark = benchmark
 
@@ -126,8 +136,13 @@ def get_list_of_func_to_make_envs(
             for name, env_cls in _get_class_items(current_benchmark):
                 if name == env_id:
                     env = env_cls()
-                    task = env_id_to_task_map[env_id]
+                    task_list = env_id_to_task_map[env_id]
+                    if sample_task_per_episode:
+                        env = RandEnvWrapper(env, task_list)
+
+                    task = random.choice(task_list)
                     env.set_task(task)
+
                     if should_perform_reward_normalization:
                         assert False
                         env = NormalizedEnvWrapper(env, normalize_reward=True)
